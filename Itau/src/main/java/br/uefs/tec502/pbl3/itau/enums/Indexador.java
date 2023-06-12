@@ -1,7 +1,11 @@
 package br.uefs.tec502.pbl3.itau.enums;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum Indexador {
+    @JsonProperty("poupanca")
     PUPANCA(1, "poupanca"),
+    @JsonProperty("corrente")
     CORRENTE(2, "corrente");
 
     private Integer code;

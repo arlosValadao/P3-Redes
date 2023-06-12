@@ -1,9 +1,15 @@
 package br.uefs.tec502.pbl3.caixaeconomica.enums;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum Banco {
+    @JsonProperty("BB")
     BANCO_DO_BRASIL(1, "Banco do Brasil", "http://localhost", 8017),
+    @JsonProperty("CEF")
     CAIXA_ECONOMICA(2, "Caixa Economica Federal", "http://localhost", 8018),
+    @JsonProperty("SA")
     SANTANDER(3, "Santander", "http://localhost", 8019),
+    @JsonProperty("IT")
     ITAU(4, "Itau", "http://localhost", 8020);
 
     private Integer code;
@@ -25,7 +31,7 @@ public enum Banco {
     }
 
     public String getUrlBanco(){
-        return this.ip + ":" + this.porta;
+        return this.ip + ":" + this.porta + "/";
     }
     public boolean getAtivo(){
         return this.ativo;

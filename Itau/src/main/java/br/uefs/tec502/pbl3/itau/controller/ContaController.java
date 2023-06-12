@@ -3,28 +3,18 @@ package br.uefs.tec502.pbl3.itau.controller;
 import br.uefs.tec502.pbl3.itau.dto.SaldoDTO;
 import br.uefs.tec502.pbl3.itau.dto.TransferenciaDTO;
 import br.uefs.tec502.pbl3.itau.model.Conta;
-import br.uefs.tec502.pbl3.itau.model.Pessoa;
 import br.uefs.tec502.pbl3.itau.service.BancoService;
 import org.springframework.web.bind.annotation.*;
 
-@RestController()
-@RequestMapping("banco")
-public class BancoController {
+@RestController
+@RequestMapping("conta")
+public class ContaController {
+
 
     private final BancoService bancoService;
 
-    public BancoController(BancoService bancoService) {
+    public ContaController(BancoService bancoService) {
         this.bancoService = bancoService;
-    }
-
-    @GetMapping()
-    public boolean tokenAnel(){
-        return bancoService.tokenAnel();
-    }
-
-    @GetMapping("teste-token")
-    public String testandoAnel(){
-        return bancoService.testeAnel();
     }
 
     @PostMapping("transferencia")
@@ -33,13 +23,13 @@ public class BancoController {
     }
 
     @PostMapping("deposito")
-    public Boolean deposito(@RequestParam(name = "numero_conta") Integer numeroConta, Double valor){
-        return bancoService.deposito(numeroConta, valor, false);
+    public Boolean deposito(@RequestParam("numero_conta") Integer numeroConta, Double valor){
+        return bancoService.deposito(numeroConta, valor, true);
     }
 
     @PostMapping("saque")
     public Boolean saque(@RequestParam("numero_conta") Integer numeroConta, Double valor, String senha){
-        return bancoService.saque(numeroConta, valor, senha, false);
+        return bancoService.saque(numeroConta, valor, senha, true);
     }
 
     @PostMapping("criar-conta")
