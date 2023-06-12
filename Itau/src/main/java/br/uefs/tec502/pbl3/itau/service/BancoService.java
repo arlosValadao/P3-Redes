@@ -1,5 +1,6 @@
 package br.uefs.tec502.pbl3.itau.service;
 
+import br.uefs.tec502.pbl3.itau.dto.ContaTransferenciaDTO;
 import br.uefs.tec502.pbl3.itau.dto.SaldoDTO;
 import br.uefs.tec502.pbl3.itau.dto.TransferenciaDTO;
 import br.uefs.tec502.pbl3.itau.enums.Banco;
@@ -11,6 +12,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.DoubleStream;
 
 @Service
 public class BancoService {
@@ -53,90 +56,99 @@ public class BancoService {
     }
 
     public String transferencia(TransferenciaDTO transferencia) {
-        Objects.requireNonNull(transferencia.getOrigem());
-        Objects.requireNonNull(transferencia.getOrigem().getBanco());
-        Objects.requireNonNull(transferencia.getOrigem().getNumeroDaConta());
-        Objects.requireNonNull(transferencia.getOrigem().getValor());
-        Objects.requireNonNull(transferencia.getDestino());
-        Objects.requireNonNull(transferencia.getDestino().getNumeroDaConta());
-        Objects.requireNonNull(transferencia.getDestino().getBanco());
-        if (transferencia.getOrigem().getNumeroDaConta() == transferencia.getDestino().getNumeroDaConta()) {
+        validaPayloadEntradaTransferencia(transferencia);
+
+        Optional<ContaTransferenciaDTO> origemIgualDestino = transferencia.getOrigens().stream()
+                .filter(origem -> origem.getNumeroDaConta() == transferencia.getDestino().getNumeroDaConta())
+                .findFirst();
+
+        if(origemIgualDestino.isPresent()){
             return "Não é possível transferir dinheiro para a mesma conta associada";
         }
 
         while (!possuiToken) ;
 
-        Optional<Conta> origem = contas.stream()
+        Optional<Conta> contaOrigemPessoa = contas.stream()
                 .filter(conta -> conta.getPessoas().stream()
-                        .filter(pessoa -> pessoa.getCpf().equals(transferencia.getOrigem().getCpf()))
-                        .findFirst().isPresent())
+                        .anyMatch(pessoa -> transferencia.getOrigens()
+                                .stream().anyMatch(origem1 -> origem1.getCpf().equals(pessoa.getCpf()))))
                 .findFirst();
 
-        if (origem.isEmpty())
+        if (contaOrigemPessoa.isEmpty())
             return "Conta de origem não encontrada, verifique o numero da conta e a senha. Não há nenhum usuário com o cpf de origem";
-        if (transferencia.getOrigem().getBanco() == Banco.ITAU) {
 
-            while (!semaforo.get(origem.get().getId()));
-            Boolean saque = saque(origem.get().getNumero(), origem.get().getSaldo(), origem.get().getSenha(), false);
-            if (!saque) {
-                return "Transferencia realizada pois não há saldo suficiente";
-            }
-            if (transferencia.getDestino().getBanco() == Banco.ITAU) {
-                Boolean deposito = deposito(transferencia.getDestino().getNumeroDaConta(), transferencia.getOrigem().getValor(), false);
-                if (!deposito) {
-                    saque = deposito(origem.get().getNumero(), origem.get().getSaldo(), false);
-                    if (!saque) {
-                        return "Houve um erro crítico na aplicação ao realizar uma transferencia interna!";
-                    }
-                }
+        Map<ContaTransferenciaDTO, Boolean> resultadoSaques = new HashMap<>();
+        //Primeiro realiza todos os saques para depois fazer o deposito na conta de destino
+        for(ContaTransferenciaDTO transaferenciaOrigem: transferencia.getOrigens()){
+            Optional<Conta> origem = contas.stream()
+                    .filter(conta -> conta.getNumero().equals(transaferenciaOrigem.getNumeroDaConta()))
+                    .findFirst();
+            Boolean saque = false;
+            if (transaferenciaOrigem.getBanco() == Banco.ITAU) {
+                saque = saque(origem.get().getNumero(), transaferenciaOrigem.getValor(), origem.get().getSenha(), false);
+
             } else {
-                Boolean deposito = depositoEmOutroBanco(transferencia.getDestino().getNumeroDaConta(),
-                        transferencia.getOrigem().getValor(),
-                        transferencia.getDestino().getBanco().getUrlBanco());
-
-                if (!deposito) {
-                    Boolean desfazSaque = deposito(origem.get().getNumero(), transferencia.getOrigem().getValor(), false);
-                    if (!desfazSaque) {
-                        return "Houve um erro crítico na aplicação ao realizar uma transferencia interna!";
-                    }
-                }
+                saque = saqueEmOutroBanco(transaferenciaOrigem.getNumeroDaConta(),
+                        transaferenciaOrigem.getValor(),
+                        transaferenciaOrigem.getBanco().getUrlBanco());
             }
-
+            resultadoSaques.put(transaferenciaOrigem, saque);
+            if (!saque) {
+                break;
+            }
         }
-        else {
-            Boolean saque = saqueEmOutroBanco(transferencia.getOrigem().getNumeroDaConta(),
-                    transferencia.getOrigem().getValor(),
-                    transferencia.getOrigem().getBanco().getUrlBanco());
 
-            if (!saque) {
-                return "Houve um erro crítico na aplicação ao realizar uma transferencia interna!" +
-                        "Possível erro: Transferencia realizada pois não há saldo suficiente.";
-            }
-            if (transferencia.getDestino().getBanco() == Banco.ITAU) {
-                Boolean deposito = deposito(transferencia.getDestino().getNumeroDaConta(), transferencia.getOrigem().getValor(), false);
-                if (!deposito) {
-                    Boolean desfazSaque = depositoEmOutroBanco(transferencia.getOrigem().getNumeroDaConta(),
-                            transferencia.getOrigem().getValor(), transferencia.getOrigem().getBanco().getUrlBanco());
-                    if (!desfazSaque) {
-                        return "Houve um erro crítico na aplicação ao realizar uma transferencia interna!";
+        if(resultadoSaques.containsValue(false)){
+            AtomicBoolean desfazSaque = new AtomicBoolean(false);
+            resultadoSaques.forEach((key, value) -> {
+                if(!value){
+                    Optional<Conta> origem = contas.stream()
+                            .filter(conta -> conta.getNumero().equals(key.getNumeroDaConta()))
+                            .findFirst();
+                    if (key.getBanco() == Banco.ITAU) {
+                        desfazSaque.set(saque(origem.get().getNumero(), origem.get().getSaldo(), origem.get().getSenha(), false));
+
+                    } else {
+                        desfazSaque.set(saqueEmOutroBanco(key.getNumeroDaConta(),
+                                key.getValor(),
+                                key.getBanco().getUrlBanco()));
                     }
-                    return "Houve um erro e não foi possível completar a transação." +
-                            "Conta destino não encontrada";
                 }
+            });
+            if(!desfazSaque.get()){
+                return "Houve um erro crítico na aplicação ao realizar uma transferencia interna!";
+            }
+            return "Transferencia não realizada. Possiveis causas:" +
+                    "Não há saldo suficiente, se a origem é outro banco é provavel que a conta não exista";
+        } else {
+            Boolean deposito = false;
+            Double valorDestino = transferencia.getOrigens().stream()
+                    .flatMapToDouble(origem -> DoubleStream.of(origem.getValor()))
+                    .sum();
+            if (transferencia.getDestino().getBanco() == Banco.ITAU) {
+                deposito = deposito(transferencia.getDestino().getNumeroDaConta(), valorDestino, false);
             } else {
-                Boolean deposito = depositoEmOutroBanco(transferencia.getDestino().getNumeroDaConta(),
-                        transferencia.getOrigem().getValor(),
+                deposito = depositoEmOutroBanco(transferencia.getDestino().getNumeroDaConta(),
+                        valorDestino,
                         transferencia.getDestino().getBanco().getUrlBanco());
+            }
+            if (!deposito) {
+                Boolean desfazSaque = false;
+                for(ContaTransferenciaDTO transaferenciaOrigem: transferencia.getOrigens()){
+                    Optional<Conta> origem = contas.stream()
+                            .filter(conta -> conta.getNumero().equals(transaferenciaOrigem.getNumeroDaConta()))
+                            .findFirst();
+                    if (transaferenciaOrigem.getBanco() == Banco.ITAU) {
+                        desfazSaque = deposito(origem.get().getNumero(), origem.get().getSaldo(), false);
 
-                if (!deposito) {
-                    Boolean desfazSaque = depositoEmOutroBanco(transferencia.getOrigem().getNumeroDaConta(),
-                            transferencia.getOrigem().getValor(),
-                            transferencia.getOrigem().getBanco().getUrlBanco());
-                    if (!desfazSaque) {
-                        return "Houve um erro crítico na aplicação ao realizar uma transferencia interna!";
+                    } else {
+                        desfazSaque = depositoEmOutroBanco(transaferenciaOrigem.getNumeroDaConta(),
+                                transaferenciaOrigem.getValor(),
+                                transaferenciaOrigem.getBanco().getUrlBanco());
                     }
-                    return "Houve um erro e a transação não pode ser realizada." +
-                            "Conta destino não encontrada!";
+                }
+                if (!desfazSaque) {
+                    return "Houve um erro crítico na aplicação ao realizar uma transferencia interna!";
                 }
             }
         }
@@ -175,7 +187,7 @@ public class BancoService {
                 .findFirst();
         if (contaOptional.isEmpty())
             return false;
-            //throw new Exception("Conta não encontrada, verifique o numero da conta e a senha");
+        //throw new Exception("Conta não encontrada, verifique o numero da conta e a senha");
         while (!possuiToken && verifyToken);
         while (!semaforo.get(contaOptional.get().getId()));
         semaforo.put(contaOptional.get().getId(), false);
@@ -227,6 +239,19 @@ public class BancoService {
                         request,
                         Boolean.class);
         return response.getStatusCode().equals(HttpStatus.OK) && response.getBody();
+    }
+
+    private void validaPayloadEntradaTransferencia(TransferenciaDTO transferencia){
+        transferencia.getOrigens().forEach(origem -> {
+            Objects.requireNonNull(origem);
+            Objects.requireNonNull(origem.getBanco());
+            Objects.requireNonNull(origem.getNumeroDaConta());
+            Objects.requireNonNull(origem.getValor());
+        });
+
+        Objects.requireNonNull(transferencia.getDestino());
+        Objects.requireNonNull(transferencia.getDestino().getNumeroDaConta());
+        Objects.requireNonNull(transferencia.getDestino().getBanco());
     }
 
 }
