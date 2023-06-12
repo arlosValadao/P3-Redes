@@ -101,15 +101,15 @@ public class BancoService {
         if(resultadoSaques.containsValue(false)){
             AtomicBoolean desfazSaque = new AtomicBoolean(false);
             resultadoSaques.forEach((key, value) -> {
-                if(!value){
+                if(value){
                     Optional<Conta> origem = contas.stream()
                             .filter(conta -> conta.getNumero().equals(key.getNumeroDaConta()))
                             .findFirst();
                     if (key.getBanco() == Banco.ITAU) {
-                        desfazSaque.set(saque(origem.get().getNumero(), origem.get().getSaldo(), origem.get().getSenha(), false));
+                        desfazSaque.set(deposito(origem.get().getNumero(), key.getValor(), false));
 
                     } else {
-                        desfazSaque.set(saqueEmOutroBanco(key.getNumeroDaConta(),
+                        desfazSaque.set(depositoEmOutroBanco(key.getNumeroDaConta(),
                                 key.getValor(),
                                 key.getBanco().getUrlBanco()));
                     }
