@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>br.uefs.tec502.pbl3</groupId>
-    <artifactId>Caixa-Economica</artifactId>
+    <artifactId>Itau</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Caixa Economica</name>
-    <description>Caixa Economica</description>
+    <name>Itau</name>
+    <description>Itau</description>
     <properties>
         <java.version>11</java.version>
     </properties>

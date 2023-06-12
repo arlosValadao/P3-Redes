@@ -47,8 +47,4 @@ public class BancoController {
         return bancoService.criarConta(conta);
     }
 
-    @GetMapping("saldo")
-    public SaldoDTO saldo(@RequestParam("id") Integer id){
-        return bancoService.consultarSaldo(id);
-    }
 }

@@ -59,7 +59,7 @@ public class BancoService {
         validaPayloadEntradaTransferencia(transferencia);
 
         Optional<ContaTransferenciaDTO> origemIgualDestino = transferencia.getOrigens().stream()
-                .filter(origem -> origem.getNumeroDaConta() == transferencia.getDestino().getNumeroDaConta())
+                .filter(origem -> Objects.equals(origem.getNumeroDaConta(), transferencia.getDestino().getNumeroDaConta()))
                 .findFirst();
 
         if(origemIgualDestino.isPresent()){
@@ -85,6 +85,8 @@ public class BancoService {
                     .findFirst();
             Boolean saque = false;
             if (transaferenciaOrigem.getBanco() == Banco.ITAU) {
+                if(origem.isEmpty())
+                    return "Uma das contas de origem é inexistente";
                 saque = saque(origem.get().getNumero(), transaferenciaOrigem.getValor(), origem.get().getSenha(), false);
 
             } else {
@@ -163,8 +165,8 @@ public class BancoService {
         Objects.requireNonNull(conta.getSenha(), "é necessário informar uma senha para a conta");
         Optional<Conta> contaCadastrada = contas.stream()
                 .filter(conta1 ->
-                        (conta1.getNumero() == conta.getNumero()
-                                && conta1.getBanco().getCode() == conta.getBanco().getCode())
+                        (conta1.getNumero().equals(conta.getNumero())
+                                && conta1.getBanco().getCode().equals(conta.getBanco().getCode()))
                 ).findFirst();
         if(contaCadastrada.isPresent()){
             throw new Error("Conta já cadastrada no sistema");
@@ -175,8 +177,10 @@ public class BancoService {
         return conta;
     }
 
-    public SaldoDTO consultarSaldo(Integer id) {
-        Conta contaResponse = contas.stream().filter(conta -> conta.getId() == id).findFirst().orElseGet(null);
+    public SaldoDTO consultarSaldo(Integer numeroConta) {
+        Conta contaResponse = contas.stream().filter(conta -> conta.getId().equals(numeroConta)).findFirst().orElseGet(null);
+        if(contaResponse == null)
+            throw new RuntimeException("Conta não encontrada");
         return new SaldoDTO(contaResponse.getNumero(), contaResponse.getSaldo());
     }
 
@@ -187,11 +191,10 @@ public class BancoService {
                 .findFirst();
         if (contaOptional.isEmpty())
             return false;
-        //throw new Exception("Conta não encontrada, verifique o numero da conta e a senha");
         while (!possuiToken && verifyToken);
         while (!semaforo.get(contaOptional.get().getId()));
         semaforo.put(contaOptional.get().getId(), false);
-        Double saldoAtualizado = contaOptional.get().getSaldo() - valor;
+        double saldoAtualizado = contaOptional.get().getSaldo() - valor;
         if (saldoAtualizado < 0) {
             semaforo.put(contaOptional.get().getId(), true);
             return false;
@@ -238,7 +241,7 @@ public class BancoService {
                 .postForEntity(urlBanco + endpoint,
                         request,
                         Boolean.class);
-        return response.getStatusCode().equals(HttpStatus.OK) && response.getBody();
+        return response.getStatusCode().equals(HttpStatus.OK) && Boolean.TRUE.equals(response.getBody());
     }
 
     private void validaPayloadEntradaTransferencia(TransferenciaDTO transferencia){
