@@ -101,19 +101,23 @@ public class BancoService {
         }
 
         if(resultadoSaques.containsValue(false)){
-            AtomicBoolean desfazSaque = new AtomicBoolean(false);
+            AtomicBoolean desfazSaque = new AtomicBoolean(true);
             resultadoSaques.forEach((key, value) -> {
                 if(value){
+                    boolean aux = false;
                     Optional<Conta> origem = contas.stream()
                             .filter(conta -> conta.getNumero().equals(key.getNumeroDaConta()))
                             .findFirst();
                     if (key.getBanco() == Banco.ITAU) {
-                        desfazSaque.set(deposito(origem.get().getNumero(), key.getValor(), false));
+                        aux = deposito(origem.get().getNumero(), key.getValor(), false);
 
                     } else {
-                        desfazSaque.set(depositoEmOutroBanco(key.getNumeroDaConta(),
+                        aux = depositoEmOutroBanco(key.getNumeroDaConta(),
                                 key.getValor(),
-                                key.getBanco().getUrlBanco()));
+                                key.getBanco().getUrlBanco());
+                    }
+                    if(desfazSaque.get() && !aux){
+                        desfazSaque.set(false);
                     }
                 }
             });
@@ -152,6 +156,7 @@ public class BancoService {
                 if (!desfazSaque) {
                     return "Houve um erro crítico na aplicação ao realizar uma transferencia interna!";
                 }
+                return "Erro ao realizar transferencia: conta destino não encontrada";
             }
         }
         return "transação realizada";
@@ -178,10 +183,10 @@ public class BancoService {
     }
 
     public SaldoDTO consultarSaldo(Integer numeroConta) {
-        Conta contaResponse = contas.stream().filter(conta -> conta.getId().equals(numeroConta)).findFirst().orElseGet(null);
-        if(contaResponse == null)
+        Optional<Conta> contaResponse = contas.stream().filter(conta -> conta.getNumero().equals(numeroConta)).findFirst();
+        if(contaResponse.isEmpty())
             throw new RuntimeException("Conta não encontrada");
-        return new SaldoDTO(contaResponse.getNumero(), contaResponse.getSaldo());
+        return new SaldoDTO(contaResponse.get().getNumero(), contaResponse.get().getSaldo());
     }
 
     public Boolean saque(Integer numeroConta, Double valor, String senha, boolean verifyToken) {
