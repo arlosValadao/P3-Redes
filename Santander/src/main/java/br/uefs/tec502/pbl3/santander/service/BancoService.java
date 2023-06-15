@@ -171,7 +171,7 @@ public class BancoService {
     }
 
     public SaldoDTO consultarSaldo(Integer numeroConta) {
-        Optional<Conta> contaResponse = contas.stream().filter(conta -> conta.getNumero() == numeroConta).findFirst();
+        Optional<Conta> contaResponse = contas.stream().filter(conta -> conta.getNumero().equals(numeroConta)).findFirst();
         if(contaResponse.isEmpty())
             throw new RuntimeException("Conta não encontrada");
         return new SaldoDTO(contaResponse.get().getNumero(), contaResponse.get().getSaldo());
