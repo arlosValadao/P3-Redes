@@ -87,6 +87,7 @@ public class BancoService {
             } else {
                 saque = saqueEmOutroBanco(transaferenciaOrigem.getNumeroDaConta(),
                         transaferenciaOrigem.getValor(),
+                        transaferenciaOrigem.getSenha(),
                         transaferenciaOrigem.getBanco().getUrlBanco());
             }
             resultadoSaques.put(transaferenciaOrigem, saque);
@@ -219,22 +220,25 @@ public class BancoService {
     private Boolean depositoEmOutroBanco(Integer numeroConta, Double valor, String urlBanco){
         String endpoint = "banco/deposito";
 
-        return saqueOuDepositoRequest(numeroConta, valor, urlBanco, endpoint);
+        return saqueOuDepositoRequest(numeroConta, valor, urlBanco, endpoint, null);
     }
 
-    private Boolean saqueEmOutroBanco(Integer numeroConta, Double valor, String urlBanco){
+    private Boolean saqueEmOutroBanco(Integer numeroConta, Double valor, String senha, String urlBanco){
         String endpoint = "banco/saque";
 
-        return saqueOuDepositoRequest(numeroConta, valor, urlBanco, endpoint);
+        return saqueOuDepositoRequest(numeroConta, valor, urlBanco, endpoint, senha);
     }
 
-    private Boolean saqueOuDepositoRequest(Integer numeroConta, Double valor, String urlBanco, String endpoint) {
+    private Boolean saqueOuDepositoRequest(Integer numeroConta, Double valor, String urlBanco, String endpoint, String senha) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
         map.add("numero_conta", numeroConta);
         map.add("valor", valor);
+        if(senha != null && !senha.trim().isEmpty())
+            map.add("senha", senha);
+
 
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map, headers);
         ResponseEntity<Boolean> response = restTemplate
