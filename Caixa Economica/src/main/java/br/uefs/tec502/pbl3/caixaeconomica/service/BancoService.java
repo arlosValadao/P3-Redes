@@ -169,9 +169,11 @@ public class BancoService {
         return conta;
     }
 
-    public SaldoDTO consultarSaldo(Integer id) {
-        Conta contaResponse = contas.stream().filter(conta -> conta.getId() == id).findFirst().orElseGet(null);
-        return new SaldoDTO(contaResponse.getNumero(), contaResponse.getSaldo());
+    public SaldoDTO consultarSaldo(Integer numeroConta) {
+        Optional<Conta> contaResponse = contas.stream().filter(conta -> conta.getNumero() == numeroConta).findFirst();
+        if(contaResponse.isEmpty())
+            throw new RuntimeException("conta não encontrada!");
+        return new SaldoDTO(contaResponse.get().getNumero(), contaResponse.get().getSaldo());
     }
 
     public Boolean saque(Integer numeroConta, Double valor, String senha, boolean verifyToken) {
