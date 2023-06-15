@@ -1,6 +1,6 @@
-package br.uefs.tec502.pbl3.caixaeconomica.controller;
+package br.uefs.tec502.pbl3.bancodobrasil.controller;
 
-import br.uefs.tec502.pbl3.caixaeconomica.service.BancoService;
+import br.uefs.tec502.pbl3.bancodobrasil.service.BancoService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController()
@@ -24,12 +24,12 @@ public class BancoController {
     }
 
     @PostMapping("deposito")
-    public Boolean deposito(@RequestParam("numero_conta") Integer numeroConta, Double valor){
+    public Boolean deposito(@RequestParam(name = "numero_conta") Integer numeroConta, Double valor){
         return bancoService.deposito(numeroConta, valor, false);
     }
 
     @PostMapping("saque")
-    public Boolean saque(@RequestParam("numero_conta") Integer numeroConta, String senha, Double valor){
+    public Boolean saque(@RequestParam("numero_conta") Integer numeroConta, Double valor, String senha){
         return bancoService.saque(numeroConta, valor, senha, false);
     }
 

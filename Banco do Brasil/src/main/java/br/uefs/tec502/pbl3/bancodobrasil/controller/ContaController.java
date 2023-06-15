@@ -1,9 +1,9 @@
-package br.uefs.tec502.pbl3.itau.controller;
+package br.uefs.tec502.pbl3.bancodobrasil.controller;
 
-import br.uefs.tec502.pbl3.itau.dto.SaldoDTO;
-import br.uefs.tec502.pbl3.itau.dto.TransferenciaDTO;
-import br.uefs.tec502.pbl3.itau.model.Conta;
-import br.uefs.tec502.pbl3.itau.service.BancoService;
+import br.uefs.tec502.pbl3.bancodobrasil.dto.SaldoDTO;
+import br.uefs.tec502.pbl3.bancodobrasil.dto.TransferenciaDTO;
+import br.uefs.tec502.pbl3.bancodobrasil.model.Conta;
+import br.uefs.tec502.pbl3.bancodobrasil.service.BancoService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

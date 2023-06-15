@@ -1,4 +1,4 @@
-package br.uefs.tec502.pbl3.caixaeconomica.dto;
+package br.uefs.tec502.pbl3.bancodobrasil.dto;
 
 import lombok.Data;
 

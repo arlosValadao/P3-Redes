@@ -28,8 +28,8 @@ public class ContaController {
     }
 
     @PostMapping("saque")
-    public Boolean saque(@RequestParam("numero_conta") Integer numeroConta, Double valor){
-        return bancoService.saque(numeroConta, valor, true);
+    public Boolean saque(@RequestParam("numero_conta") Integer numeroConta, String senha, Double valor){
+        return bancoService.saque(numeroConta, valor, senha, true);
     }
 
     @PostMapping("criar-conta")

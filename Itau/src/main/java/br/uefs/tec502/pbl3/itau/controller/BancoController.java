@@ -27,11 +27,6 @@ public class BancoController {
         return bancoService.testeAnel();
     }
 
-    @PostMapping("transferencia")
-    public String transferencia(@RequestBody TransferenciaDTO transferenciaDTO){
-        return bancoService.transferencia(transferenciaDTO);
-    }
-
     @PostMapping("deposito")
     public Boolean deposito(@RequestParam(name = "numero_conta") Integer numeroConta, Double valor){
         return bancoService.deposito(numeroConta, valor, false);
@@ -40,11 +35,6 @@ public class BancoController {
     @PostMapping("saque")
     public Boolean saque(@RequestParam("numero_conta") Integer numeroConta, Double valor, String senha){
         return bancoService.saque(numeroConta, valor, senha, false);
-    }
-
-    @PostMapping("criar-conta")
-    public Conta criarConta(@RequestBody Conta conta){
-        return bancoService.criarConta(conta);
     }
 
 }

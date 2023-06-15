@@ -1,10 +1,10 @@
-package br.uefs.tec502.pbl3.itau.service;
+package br.uefs.tec502.pbl3.bancodobrasil.service;
 
-import br.uefs.tec502.pbl3.itau.dto.ContaTransferenciaDTO;
-import br.uefs.tec502.pbl3.itau.dto.SaldoDTO;
-import br.uefs.tec502.pbl3.itau.dto.TransferenciaDTO;
-import br.uefs.tec502.pbl3.itau.enums.Banco;
-import br.uefs.tec502.pbl3.itau.model.Conta;
+import br.uefs.tec502.pbl3.bancodobrasil.dto.ContaTransferenciaDTO;
+import br.uefs.tec502.pbl3.bancodobrasil.dto.SaldoDTO;
+import br.uefs.tec502.pbl3.bancodobrasil.dto.TransferenciaDTO;
+import br.uefs.tec502.pbl3.bancodobrasil.enums.Banco;
+import br.uefs.tec502.pbl3.bancodobrasil.model.Conta;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -19,7 +19,7 @@ import java.util.stream.DoubleStream;
 public class BancoService {
     private boolean possuiToken = false;
     private final RestTemplate restTemplate;
-    private List<Banco> bancos = List.of(new Banco[]{Banco.SANTANDER, Banco.BANCO_DO_BRASIL, Banco.CAIXA_ECONOMICA});
+    private List<Banco> bancos = List.of(new Banco[]{Banco.CAIXA_ECONOMICA, Banco.ITAU, Banco.SANTANDER});
     private Map<Integer, Boolean> semaforo = new HashMap<>();
     private List<Conta> contas = new ArrayList<>();
 
@@ -79,7 +79,7 @@ public class BancoService {
                     .filter(conta -> conta.getNumero().equals(transaferenciaOrigem.getNumeroDaConta()))
                     .findFirst();
             Boolean saque = false;
-            if (transaferenciaOrigem.getBanco() == Banco.ITAU) {
+            if (transaferenciaOrigem.getBanco() == Banco.BANCO_DO_BRASIL) {
                 if(origem.isEmpty())
                     return "Uma das contas de origem é inexistente";
                 saque = saque(origem.get().getNumero(), transaferenciaOrigem.getValor(), origem.get().getSenha(), false);
@@ -103,7 +103,7 @@ public class BancoService {
                     Optional<Conta> origem = contas.stream()
                             .filter(conta -> conta.getNumero().equals(key.getNumeroDaConta()))
                             .findFirst();
-                    if (key.getBanco() == Banco.ITAU) {
+                    if (key.getBanco() == Banco.BANCO_DO_BRASIL) {
                         aux = deposito(origem.get().getNumero(), key.getValor(), false);
 
                     } else {
@@ -126,7 +126,7 @@ public class BancoService {
             Double valorDestino = transferencia.getOrigens().stream()
                     .flatMapToDouble(origem -> DoubleStream.of(origem.getValor()))
                     .sum();
-            if (transferencia.getDestino().getBanco() == Banco.ITAU) {
+            if (transferencia.getDestino().getBanco() == Banco.BANCO_DO_BRASIL) {
                 deposito = deposito(transferencia.getDestino().getNumeroDaConta(), valorDestino, false);
             } else {
                 deposito = depositoEmOutroBanco(transferencia.getDestino().getNumeroDaConta(),
@@ -139,7 +139,7 @@ public class BancoService {
                     Optional<Conta> origem = contas.stream()
                             .filter(conta -> conta.getNumero().equals(transaferenciaOrigem.getNumeroDaConta()))
                             .findFirst();
-                    if (transaferenciaOrigem.getBanco() == Banco.ITAU) {
+                    if (transaferenciaOrigem.getBanco() == Banco.BANCO_DO_BRASIL) {
                         desfazSaque = deposito(origem.get().getNumero(), origem.get().getSaldo(), false);
 
                     } else {

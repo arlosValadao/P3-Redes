@@ -1,6 +1,6 @@
-package br.uefs.tec502.pbl3.caixaeconomica.controller;
+package br.uefs.tec502.pbl3.santander.controller;
 
-import br.uefs.tec502.pbl3.caixaeconomica.service.BancoService;
+import br.uefs.tec502.pbl3.santander.service.BancoService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController()

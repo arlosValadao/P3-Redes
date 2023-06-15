@@ -1,10 +1,10 @@
-package br.uefs.tec502.pbl3.itau.service;
+package br.uefs.tec502.pbl3.santander.service;
 
-import br.uefs.tec502.pbl3.itau.dto.ContaTransferenciaDTO;
-import br.uefs.tec502.pbl3.itau.dto.SaldoDTO;
-import br.uefs.tec502.pbl3.itau.dto.TransferenciaDTO;
-import br.uefs.tec502.pbl3.itau.enums.Banco;
-import br.uefs.tec502.pbl3.itau.model.Conta;
+import br.uefs.tec502.pbl3.santander.dto.ContaTransferenciaDTO;
+import br.uefs.tec502.pbl3.santander.dto.SaldoDTO;
+import br.uefs.tec502.pbl3.santander.dto.TransferenciaDTO;
+import br.uefs.tec502.pbl3.santander.enums.Banco;
+import br.uefs.tec502.pbl3.santander.model.Conta;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -19,7 +19,7 @@ import java.util.stream.DoubleStream;
 public class BancoService {
     private boolean possuiToken = false;
     private final RestTemplate restTemplate;
-    private List<Banco> bancos = List.of(new Banco[]{Banco.SANTANDER, Banco.BANCO_DO_BRASIL, Banco.CAIXA_ECONOMICA});
+    private List<Banco> bancos = List.of(new Banco[]{Banco.BANCO_DO_BRASIL, Banco.CAIXA_ECONOMICA, Banco.ITAU});
     private Map<Integer, Boolean> semaforo = new HashMap<>();
     private List<Conta> contas = new ArrayList<>();
 
@@ -27,25 +27,25 @@ public class BancoService {
         this.restTemplate = new RestTemplate();
     }
 
-    public boolean tokenAnel() {
+    public boolean tokenAnel(){
         possuiToken = true;
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             System.out.println(e);
         }
-        Banco nextHope = bancos.stream().filter(Banco::getAtivo).findFirst().orElse(bancos.stream().findFirst().get());
-        //Banco nextHope = bancos.get(2);
+        RestTemplate restTemplate = new RestTemplate();
+        Banco nextHope = bancos.stream().filter(Banco::getAtivo).findFirst().orElse(null);
         possuiToken = false;
         String endpoint = "/banco";
         new Thread(()->{
-            restTemplate.getForEntity(nextHope.getUrlBanco() + endpoint, Boolean.class);
+            restTemplate.getForEntity(nextHope.getUrlBanco()+endpoint, Object.class);
         }).start();
         return true;
     }
 
-    public String testeAnel() {
-        while (!possuiToken) ;
+    public String testeAnel(){
+        while(!possuiToken);
         return "Estou com o token";
     }
 
@@ -79,7 +79,7 @@ public class BancoService {
                     .filter(conta -> conta.getNumero().equals(transaferenciaOrigem.getNumeroDaConta()))
                     .findFirst();
             Boolean saque = false;
-            if (transaferenciaOrigem.getBanco() == Banco.ITAU) {
+            if (transaferenciaOrigem.getBanco() == Banco.SANTANDER) {
                 if(origem.isEmpty())
                     return "Uma das contas de origem é inexistente";
                 saque = saque(origem.get().getNumero(), transaferenciaOrigem.getValor(), origem.get().getSenha(), false);
@@ -103,7 +103,7 @@ public class BancoService {
                     Optional<Conta> origem = contas.stream()
                             .filter(conta -> conta.getNumero().equals(key.getNumeroDaConta()))
                             .findFirst();
-                    if (key.getBanco() == Banco.ITAU) {
+                    if (key.getBanco() == Banco.SANTANDER) {
                         aux = deposito(origem.get().getNumero(), key.getValor(), false);
 
                     } else {
@@ -126,7 +126,7 @@ public class BancoService {
             Double valorDestino = transferencia.getOrigens().stream()
                     .flatMapToDouble(origem -> DoubleStream.of(origem.getValor()))
                     .sum();
-            if (transferencia.getDestino().getBanco() == Banco.ITAU) {
+            if (transferencia.getDestino().getBanco() == Banco.SANTANDER) {
                 deposito = deposito(transferencia.getDestino().getNumeroDaConta(), valorDestino, false);
             } else {
                 deposito = depositoEmOutroBanco(transferencia.getDestino().getNumeroDaConta(),
@@ -139,7 +139,7 @@ public class BancoService {
                     Optional<Conta> origem = contas.stream()
                             .filter(conta -> conta.getNumero().equals(transaferenciaOrigem.getNumeroDaConta()))
                             .findFirst();
-                    if (transaferenciaOrigem.getBanco() == Banco.ITAU) {
+                    if (transaferenciaOrigem.getBanco() == Banco.SANTANDER) {
                         desfazSaque = deposito(origem.get().getNumero(), origem.get().getSaldo(), false);
 
                     } else {
@@ -163,25 +163,15 @@ public class BancoService {
         Objects.requireNonNull(conta.getContaConjunta(), "é necessário informar se é uma conta conjunta");
         Objects.requireNonNull(conta.getPessoas(), "é necessário informar as pessoas associadas a esta conta");
         Objects.requireNonNull(conta.getSenha(), "é necessário informar uma senha para a conta");
-        Optional<Conta> contaCadastrada = contas.stream()
-                .filter(conta1 ->
-                        (conta1.getNumero().equals(conta.getNumero())
-                                && conta1.getBanco().getCode().equals(conta.getBanco().getCode()))
-                ).findFirst();
-        if(contaCadastrada.isPresent()){
-            throw new Error("Conta já cadastrada no sistema");
-        }
         conta.setId(contas.size());
         contas.add(conta);
         semaforo.put(conta.getId(), true);
         return conta;
     }
 
-    public SaldoDTO consultarSaldo(Integer numeroConta) {
-        Optional<Conta> contaResponse = contas.stream().filter(conta -> conta.getNumero().equals(numeroConta)).findFirst();
-        if(contaResponse.isEmpty())
-            throw new RuntimeException("Conta não encontrada");
-        return new SaldoDTO(contaResponse.get().getNumero(), contaResponse.get().getSaldo());
+    public SaldoDTO consultarSaldo(Integer id) {
+        Conta contaResponse = contas.stream().filter(conta -> conta.getId() == id).findFirst().orElseGet(null);
+        return new SaldoDTO(contaResponse.getNumero(), contaResponse.getSaldo());
     }
 
     public Boolean saque(Integer numeroConta, Double valor, String senha, boolean verifyToken) {
@@ -192,9 +182,9 @@ public class BancoService {
         if (contaOptional.isEmpty())
             return false;
         while (!possuiToken && verifyToken);
-        while (!semaforo.get(contaOptional.get().getId()));
+        while(!semaforo.get(contaOptional.get().getId()));
         semaforo.put(contaOptional.get().getId(), false);
-        double saldoAtualizado = contaOptional.get().getSaldo() - valor;
+        Double saldoAtualizado = contaOptional.get().getSaldo() - valor;
         if (saldoAtualizado < 0) {
             semaforo.put(contaOptional.get().getId(), true);
             return false;
@@ -204,12 +194,12 @@ public class BancoService {
         return true;
     }
 
-    public Boolean deposito(Integer numeroConta, Double valor, boolean verifyToken) {
-        Optional<Conta> contaOptional = contas.stream().filter(conta -> Objects.equals(conta.getNumero(), numeroConta)).findFirst();
+    public Boolean deposito(Integer numeroConta, Double valor, boolean  verifyToken) {
+        Optional<Conta> contaOptional = contas.stream().filter(conta -> conta.getNumero().equals(numeroConta)).findFirst();
         if (contaOptional.isEmpty())
             return false;
         while (!possuiToken && verifyToken);
-        while (!semaforo.get(contaOptional.get().getId()));
+        while(!semaforo.get(contaOptional.get().getId()));
         semaforo.put(contaOptional.get().getId(), false);
         contaOptional.get().setSaldo(contaOptional.get().getSaldo() + valor);
         semaforo.put(contaOptional.get().getId(), true);
@@ -256,5 +246,4 @@ public class BancoService {
         Objects.requireNonNull(transferencia.getDestino().getNumeroDaConta());
         Objects.requireNonNull(transferencia.getDestino().getBanco());
     }
-
 }

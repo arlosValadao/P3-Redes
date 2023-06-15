@@ -1,14 +1,15 @@
-package br.uefs.tec502.pbl3.itau.controller;
+package br.uefs.tec502.pbl3.santander.controller;
 
-import br.uefs.tec502.pbl3.itau.dto.SaldoDTO;
-import br.uefs.tec502.pbl3.itau.dto.TransferenciaDTO;
-import br.uefs.tec502.pbl3.itau.model.Conta;
-import br.uefs.tec502.pbl3.itau.service.BancoService;
+import br.uefs.tec502.pbl3.santander.dto.SaldoDTO;
+import br.uefs.tec502.pbl3.santander.dto.TransferenciaDTO;
+import br.uefs.tec502.pbl3.santander.model.Conta;
+import br.uefs.tec502.pbl3.santander.service.BancoService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("conta")
 public class ContaController {
+
 
     private final BancoService bancoService;
 
@@ -27,7 +28,7 @@ public class ContaController {
     }
 
     @PostMapping("saque")
-    public Boolean saque(@RequestParam("numero_conta") Integer numeroConta, Double valor, String senha){
+    public Boolean saque(@RequestParam("numero_conta") Integer numeroConta, String senha, Double valor){
         return bancoService.saque(numeroConta, valor, senha, true);
     }
 
@@ -37,7 +38,7 @@ public class ContaController {
     }
 
     @GetMapping("saldo")
-    public SaldoDTO saldo(@RequestParam("numero_conta") Integer numeroConta){
-        return bancoService.consultarSaldo(numeroConta);
+    public SaldoDTO saldo(@RequestParam("id") Integer id){
+        return bancoService.consultarSaldo(id);
     }
 }
