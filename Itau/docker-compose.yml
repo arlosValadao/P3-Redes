@@ -1,7 +1,7 @@
 version: "2"
 services:
   server:
-    image: diego10rocha/pbl3_redes:itau_bridge
+    image: diego10rocha/pbl3_redes:itau_bridge_final
     build:
       context: .
       dockerfile: Dockerfile

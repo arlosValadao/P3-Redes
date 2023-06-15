@@ -28,19 +28,18 @@ public class BancoService {
     }
 
     public boolean tokenAnel() {
+        System.out.println("Estou com o token!");
         possuiToken = true;
         try {
-            Thread.sleep(5000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             System.out.println(e);
         }
-        Banco nextHope = bancos.stream().filter(Banco::getAtivo).findFirst().orElse(bancos.stream().findFirst().get());
+        Banco nextHope = Banco.SANTANDER;
         //Banco nextHope = bancos.get(2);
         possuiToken = false;
         String endpoint = "/banco";
-        new Thread(()->{
-            restTemplate.getForEntity(nextHope.getUrlBanco() + endpoint, Boolean.class);
-        }).start();
+        restTemplate.getForEntity(nextHope.getUrlBanco() + endpoint, Boolean.class);
         return true;
     }
 
