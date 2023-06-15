@@ -1,0 +1,13 @@
+version: "2"
+services:
+  server:
+    image: diego10rocha/pbl3_redes:itau_bridge
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - /app
+    ports:
+      - "8020:8020/tcp"
+    network_mode: "bridge"

@@ -1,0 +1,13 @@
+version: "2"
+services:
+  server:
+    image: diego10rocha/pbl3_redes:caixa_economica_bridge
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - /app
+    ports:
+      - "8018:8018/tcp"
+    network_mode: "bridge"

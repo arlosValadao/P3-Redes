@@ -164,6 +164,14 @@ public class BancoService {
         Objects.requireNonNull(conta.getContaConjunta(), "é necessário informar se é uma conta conjunta");
         Objects.requireNonNull(conta.getPessoas(), "é necessário informar as pessoas associadas a esta conta");
         Objects.requireNonNull(conta.getSenha(), "é necessário informar uma senha para a conta");
+        Optional<Conta> contaCadastrada = contas.stream()
+                .filter(conta1 ->
+                        (conta1.getNumero().equals(conta.getNumero())
+                                && conta1.getBanco().getCode().equals(conta.getBanco().getCode()))
+                ).findFirst();
+        if(contaCadastrada.isPresent()){
+            throw new Error("Conta já cadastrada no sistema");
+        }
         conta.setId(contas.size());
         contas.add(conta);
         semaforo.put(conta.getId(), true);

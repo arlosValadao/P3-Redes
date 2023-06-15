@@ -1,0 +1,13 @@
+version: "2"
+services:
+  server:
+    image: diego10rocha/pbl3_redes:santander_bridge
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - /app
+    ports:
+      - "8019:8019/tcp"
+    network_mode: "bridge"
