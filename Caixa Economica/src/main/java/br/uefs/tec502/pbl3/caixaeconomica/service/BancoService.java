@@ -163,6 +163,8 @@ public class BancoService {
         Objects.requireNonNull(conta.getContaConjunta(), "é necessário informar se é uma conta conjunta");
         Objects.requireNonNull(conta.getPessoas(), "é necessário informar as pessoas associadas a esta conta");
         Objects.requireNonNull(conta.getSenha(), "é necessário informar uma senha para a conta");
+
+        conta.setBanco(Banco.CAIXA_ECONOMICA);
         Optional<Conta> contaCadastrada = contas.stream()
                 .filter(conta1 ->
                         (conta1.getNumero().equals(conta.getNumero())
