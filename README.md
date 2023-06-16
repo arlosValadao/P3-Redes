@@ -29,6 +29,7 @@ O objetivo deste projeto foi a implementação de um sistema distribuído para t
 
 A presença de uma entidade centralizadora responsável por implementar leis e direitos em um sistema monetário
 na grande maioria dos países atuais, comumente chamada de banco central, tem também como função a supervisão do sistema financeiro e execução da política monetária e cambial de um determinado país, de tal forma que a inexistência desta entidade em um país/localidade acarreta dentre outras desvantagens um sistema financeiro não supervisionado, e descentralizado, cabendo as entidades existentes garantirem o supervisionamento do sistema financeiro e a execução da política monetária e cambial, dentre outras atribuições.
+Este documento apresenta o projeto e desenvolvimento de um sistema computacional distribuído que consiste em um sistema similar ao PIX implementado pelo Banco Central do Brasil (BCB), este sistema é caapz de realizar transações de saque, depósito e transferências, além de consulta de saldo, descentralizadas. Senso assim  possível enviar dinheiro a partir de um banco X e Y para um banco Z, por exemplo, uma vez que no existe uma entidade centralizadora. Para a criação da solução foi utilizada a linguagem de programaço Java, bem como o seu framework Java Spring Boot e a implementação de um algoritmo de sincronização em sistemas distribuídos token ring.
 
 # <a id="fundamentacao_teorica"></a>
 ## Fundamentação Teórica
